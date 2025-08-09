@@ -1,86 +1,80 @@
-import os
-import logging
+import re
+import pymorphy2
 from collections import defaultdict
 
 class KeywordProcessor:
-    def __init__(self):
-        self.keywords = self.load_keywords()
-        self.synonym_map, self.base_to_synonyms = self.load_synonyms()
-        self.prioritizer = ResponsePrioritizer()
+    def __init__(self, keywords_path='data/keywords.txt'):
+        self.keyword_tree = defaultdict(dict)
+        self.keyword_responses = {}
+        self.keywords_path = keywords_path
+        self.morph = pymorphy2.MorphAnalyzer()
+        self._load_keywords()
 
-    def load_keywords(self):
-        return {
-            "привет": {"type": "greeting", "response": "Здравствуйте! Чем могу помочь?"},
-            "пока": {"type": "farewell", "response": "До свидания! Обращайтесь ещё!"},
-            "цена": {"type": "product", "response": "Цены начинаются от 1000 рублей."},
-            "оплата": {"type": "payment", "response": "Мы принимаем карты и электронные кошельки."},
-            "доставка": {"type": "delivery", "response": "Доставка занимает 1-3 рабочих дня."}
-        }
+    def _load_keywords(self):
+        try:
+            with open(self.keywords_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    
+                    parts = [p.strip() for p in line.split('|')]
+                    if len(parts) < 3:
+                        continue
+                        
+                    keyword = parts[0]
+                    response = parts[2]
+                    
+                    # Нормализация ключевых слов
+                    base_form = self._get_base_form(keyword)
+                    self.keyword_responses[base_form] = response
+                    self._add_keyword(base_form)
+        except FileNotFoundError:
+            print(f"Warning: {self.keywords_path} not found")
 
-    def load_synonyms(self):
-        synonym_map = {
-            "прив": "привет",
-            "здравствуй": "привет",
-            "добрый день": "привет",
-            "прощайте": "пока",
-            "до свидания": "пока",
-            "стоимость": "цена",
-            "оплатить": "оплата",
-            "доставить": "доставка"
-        }
-        
-        # Создаем обратное отображение
-        base_to_synonyms = defaultdict(list)
-        for synonym, base in synonym_map.items():
-            base_to_synonyms[base].append(synonym)
-            
-        return synonym_map, dict(base_to_synonyms)
+    def _add_keyword(self, keyword):
+        current = self.keyword_tree
+        for char in keyword:
+            current = current.setdefault(char, {})
+        current['__end__'] = True
 
-    def process(self, message: str) -> str:
-        responses = self.find_responses(message)
-        sorted_responses = self.prioritizer.sort_responses(responses)
-        return sorted_responses[0]["response"] if sorted_responses else "Не понимаю ваш запрос. Попробуйте переформулировать."
+    def _get_base_form(self, word):
+        """Приводит слово к нормальной форме"""
+        parsed = self.morph.parse(word)
+        return parsed[0].normal_form if parsed else word
 
-    def find_responses(self, message: str) -> list:
-        """Находит все подходящие ответы в сообщении"""
-        responses = []
-        words = message.lower().split()
+    def process(self, text):
+        """Обрабатывает текст и возвращает ответ"""
+        keywords = self.extract_keywords(text)
         
-        # Проверка словосочетаний (2-3 слова)
-        for i in range(len(words)-1):
-            phrase = " ".join(words[i:i+2])
-            if phrase in self.synonym_map:
-                base = self.synonym_map[phrase]
-                responses.append(self.keywords[base])
+        if keywords:
+            # Возвращаем ответ для первого найденного ключевого слова
+            return self.keyword_responses.get(keywords[0], 
+                   "Не понимаю ваш запрос. Попробуйте переформулировать.")
         
-        # Проверка отдельных слов
-        for word in words:
-            if word in self.synonym_map:
-                base = self.synonym_map[word]
-                responses.append(self.keywords[base])
-            elif word in self.keywords:
-                responses.append(self.keywords[word])
-        
-        return responses
+        return "Не понимаю ваш запрос. Попробуйте переформулировать."
 
-class ResponsePrioritizer:
-    PRIORITY_ORDER = ["greeting", "product", "payment", "delivery", "farewell"]
-    
-    def sort_responses(self, responses):
-        if not responses: return []
+    def extract_keywords(self, text):
+        """Извлекает ключевые слова из текста с учётом морфологии"""
+        results = []
+        current = self.keyword_tree
+        start_index = 0
         
-        type_groups = defaultdict(list)
-        for response in responses:
-            response_type = response.get("type", "other")
-            type_groups[response_type].append(response)
+        # Обработка текста по словам
+        words = re.findall(r'\w+', text.lower())
+        normalized_text = ' '.join([self._get_base_form(word) for word in words])
         
-        sorted_responses = []
-        for p_type in self.PRIORITY_ORDER:
-            if p_type in type_groups:
-                sorted_responses.extend(type_groups[p_type])
+        for i, char in enumerate(normalized_text):
+            if char in current:
+                current = current[char]
+                if '__end__' in current:
+                    keyword = normalized_text[start_index:i+1]
+                    if keyword in self.keyword_responses:
+                        results.append(keyword)
+                    current = self.keyword_tree
+                    start_index = i+1
+            else:
+                current = self.keyword_tree
+                start_index = i+1
         
-        for r_type, group in type_groups.items():
-            if r_type not in self.PRIORITY_ORDER:
-                sorted_responses.extend(group)
-                
-        return sorted_responses
+        return results

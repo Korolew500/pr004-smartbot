@@ -13,3 +13,4 @@ venv/
 # Test artifacts
 .coverage
 htmlcov/
+test_report.txt

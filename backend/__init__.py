@@ -2,7 +2,8 @@
 
 # Импорт основных компонентов
 from .main import Backend
-from .spell_checker import check_spelling
+from .spell_checker import SpellChecker
 from .keyword_processor import KeywordProcessor
+from .synonym_mapper import SynonymMapper
 
-__all__ = ['Backend', 'check_spelling', 'KeywordProcessor']  # Явное указание экспортируемых объектов
+__all__ = ['Backend', 'SpellChecker', 'KeywordProcessor', 'SynonymMapper']

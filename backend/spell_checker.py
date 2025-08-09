@@ -1,30 +1,22 @@
-from pymorphy3 import MorphAnalyzer
+import re
+from spellchecker import SpellChecker as ExternalSpellChecker
 
-_morph = MorphAnalyzer()
-
-# Специальные случаи коррекции
-SPECIAL_CASES = {
-    "приветсвую": "приветствовать",
-    "приветсвуй": "приветствовать",
-    "приветсвует": "приветствовать",
-    "машына": "машина"
-}
-
-def check_spelling(word):
-    """Улучшенная проверка орфографии"""
-    # Проверка специальных случаев
-    if word in SPECIAL_CASES:
-        return SPECIAL_CASES[word]
+class SpellChecker:
+    def __init__(self):
+        self.spell = ExternalSpellChecker(language='ru')
         
-    # Обработка коротких слов
-    if len(word) < 3:
-        return word
-        
-    # Стандартная обработка
-    parsed = _morph.parse(word)
-    if not parsed or parsed[0].score < 0.5:
-        return word
-    
-    # Выбираем вариант с наибольшей вероятностью
-    best_parse = max(parsed, key=lambda p: p.score)
-    return best_parse.normal_form
+    def correct_spelling(self, word: str) -> str:
+        """Обработка коротких слов и специальных случаев"""
+        if len(word) < 3:
+            return word
+            
+        if re.match(r'^\d+$', word):
+            return word
+            
+        return self.spell.correction(word) or word
+
+    def correct_text(self, text: str) -> str:
+        """Коррекция орфографии во всем тексте"""
+        words = text.split()
+        corrected = [self.correct_spelling(word) for word in words]
+        return ' '.join(corrected)

@@ -15,23 +15,30 @@
 1. Создайте виртуальное окружение:
 ```bash
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate  # Windows
 ```
 
-2. Установите зависимости:
+2. Активируйте окружение:
+```bash
+# Linux/Mac
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
+```
+
+3. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Запустите бота в консольном режиме:
+4. Запустите бота:
 ```bash
 python main.py
 ```
-
-4. Для выхода введите "exit"
 
 ## Запуск тестов
 ```bash
 python run_tests.py
 ```
+
+⚠️ Важно: Скрипт run_tests.py автоматически активирует venv
