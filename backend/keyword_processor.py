@@ -13,17 +13,36 @@ class KeywordProcessor:
         self.prioritizer = ResponsePrioritizer()
 
     def load_keywords(self) -> Dict[str, Dict]:
-        # ... существующая реализация ...
+        """Временная заглушка для загрузки ключевых слов"""
+        return {
+            "привет": {"type": "greeting", "response": "Здравствуйте! Чем могу помочь?"},
+            "цена": {"type": "product", "response": "Цены начинаются от 1000 рублей."},
+            "оплата": {"type": "payment", "response": "Мы принимаем карты и электронные кошельки."},
+            "доставка": {"type": "delivery", "response": "Доставка занимает 1-3 рабочих дня."}
+        }
 
     def load_synonyms(self) -> Dict[str, str]:
-        # ... существующая реализация ...
+        """Временная заглушка для загрузки синонимов"""
+        return {
+            "прив": "привет",
+            "здравствуй": "привет",
+            "стоимость": "цена",
+            "оплатить": "оплата",
+            "доставить": "доставка"
+        }
 
     def process_message(self, message: str) -> List[Dict]:
         """Обрабатывает сообщение и возвращает ответы с приоритетом"""
         responses = []
+        words = message.split()
         
-        # Обработка ключевых слов и синонимов
-        # ... существующая логика ...
+        for word in words:
+            # Проверяем синонимы
+            base_word = self.synonyms.get(word.lower(), word.lower())
+            
+            # Ищем ключевое слово
+            if base_word in self.keywords:
+                responses.append(self.keywords[base_word])
         
         # Сортировка по приоритету
         return self.prioritizer.sort_responses(responses)
