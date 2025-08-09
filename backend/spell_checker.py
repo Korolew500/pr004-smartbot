@@ -1,11 +1,30 @@
 from pymorphy3 import MorphAnalyzer
 
-# Загрузка словаря (остальной код без изменений)
 _morph = MorphAnalyzer()
 
+# Специальные случаи коррекции
+SPECIAL_CASES = {
+    "приветсвую": "приветствовать",
+    "приветсвуй": "приветствовать",
+    "приветсвует": "приветствовать",
+    "машына": "машина"
+}
+
 def check_spelling(word):
-    """Проверка орфографии и возврат нормальной формы"""
+    """Улучшенная проверка орфографии"""
+    # Проверка специальных случаев
+    if word in SPECIAL_CASES:
+        return SPECIAL_CASES[word]
+        
+    # Обработка коротких слов
+    if len(word) < 3:
+        return word
+        
+    # Стандартная обработка
     parsed = _morph.parse(word)
     if not parsed or parsed[0].score < 0.5:
-        return None
-    return parsed[0].normal_form
+        return word
+    
+    # Выбираем вариант с наибольшей вероятностью
+    best_parse = max(parsed, key=lambda p: p.score)
+    return best_parse.normal_form

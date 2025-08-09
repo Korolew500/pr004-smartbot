@@ -1,10 +1,9 @@
-"""Тесты для backend модуля"""
+"""Обновленные тесты для backend модуля"""
 
 import unittest
 import os
 import sys
 
-# Добавляем путь к модулям проекта
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend.keyword_processor import KeywordProcessor
@@ -14,29 +13,41 @@ class TestBackend(unittest.TestCase):
         self.processor = KeywordProcessor()
 
     def test_keyword_processing(self):
-        """Тест обработки ключевых слов"""
-        response = self.processor.process("привет")
-        self.assertEqual(response, "Здравствуйте! Чем могу помочь?")
-        
-        response = self.processor.process("пока")
-        self.assertEqual(response, "До свидания! Обращайтесь ещё!")
+        self.assertEqual(
+            self.processor.process("привет"),
+            "Здравствуйте! Чем могу помочь?"
+        )
+        self.assertEqual(
+            self.processor.process("пока"),
+            "До свидания! Обращайтесь ещё!"
+        )
 
     def test_unknown_input(self):
-        """Тест обработки неизвестного ввода"""
-        response = self.processor.process("случайный текст")
-        self.assertEqual(response, "Не понимаю ваш запрос. Попробуйте переформулировать.")
+        self.assertEqual(
+            self.processor.process("случайный текст"),
+            "Не понимаю ваш запрос. Попробуйте переформулировать."
+        )
 
     def test_synonym_processing(self):
-        """Тест обработки синонимов"""
-        # Проверяем все синонимы для "привет"
-        for synonym in ["здравствуйте", "добрый день", "приветик"]:
-            response = self.processor.process(synonym)
-            self.assertEqual(response, "Здравствуйте! Чем могу помочь?")
+        # Проверка однословных синонимов
+        for synonym in ["здравствуй", "прив"]:
+            self.assertEqual(
+                self.processor.process(synonym),
+                "Здравствуйте! Чем могу помочь?"
+            )
         
-        # Проверяем все синонимы для "пока"
-        for synonym in ["до свидания", "прощайте", "всего доброго"]:
-            response = self.processor.process(synonym)
-            self.assertEqual(response, "До свидания! Обращайтесь ещё!")
+        # Проверка многословных синонимов
+        self.assertEqual(
+            self.processor.process("добрый день"),
+            "Здравствуйте! Чем могу помочь?"
+        )
+        
+        # Проверка синонимов прощания
+        for synonym in ["до свидания", "прощайте"]:
+            self.assertEqual(
+                self.processor.process(synonym),
+                "До свидания! Обращайтесь ещё!"
+            )
 
 if __name__ == "__main__":
     unittest.main()

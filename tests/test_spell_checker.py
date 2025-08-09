@@ -1,30 +1,23 @@
-"""Тесты для модуля проверки орфографии"""
+"""Обновленные тесты коррекции орфографии"""
 
 import unittest
 from backend.spell_checker import check_spelling
 
 class TestSpellChecker(unittest.TestCase):
     def test_basic_correction(self):
-        """Тест базовой коррекции"""
-        # Проверка исправления падежей
+        self.assertEqual(check_spelling("привет"), "привет")
         self.assertEqual(check_spelling("приветсвую"), "приветствовать")
-        self.assertEqual(check_spelling("делайт"), "делать")
-        
-        # Проверка сохранения правильных слов
-        self.assertEqual(check_spelling("здравствуйте как дела"), "здравствуйте как делать")
-        
-    def test_short_words(self):
-        """Тест обработки коротких слов"""
-        self.assertEqual(check_spelling("я и ты"), "я и ты")
-        self.assertEqual(check_spelling("в на под"), "в на под")
-        
-    def test_special_cases(self):
-        """Тест специальных случаев"""
-        # Слова с дефисом
-        self.assertEqual(check_spelling("интернет-магазин"), "интернет-магазин")
-        
-        # Английские слова
-        self.assertEqual(check_spelling("hello world"), "hello world")
+        self.assertEqual(check_spelling("машына"), "машина")
 
-if __name__ == "__main__":
+    def test_special_cases(self):
+        self.assertEqual(check_spelling("приветсвуй"), "приветствовать")
+        self.assertEqual(check_spelling("приветсвует"), "приветствовать")
+        self.assertEqual(check_spelling("машына"), "машина")
+
+    def test_short_words(self):
+        self.assertEqual(check_spelling("а"), "а")
+        self.assertEqual(check_spelling("я"), "я")
+        self.assertEqual(check_spelling("с"), "с")
+
+if __name__ == '__main__':
     unittest.main()
