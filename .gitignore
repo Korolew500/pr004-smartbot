@@ -14,3 +14,7 @@ venv/
 .coverage
 htmlcov/
 test_report.txt
+
+# Telegram session files
+*.session
+*.session-journal

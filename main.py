@@ -1,30 +1,25 @@
 #!/usr/bin/env python3
 """Главный запускаемый файл проекта"""
 
+import os
+import sys
 from backend.main import Backend
 from frontend.main import Frontend
+from backend.admin_console import AdminConsole  # <-- NEW
 
 class SmartBot:
     def __init__(self):
         self.backend = Backend()
-        self.frontend = Frontend()
+        self.frontend = Frontend(self.backend)
+        self.admin_console = AdminConsole(self.backend)  # <-- NEW
 
     def run(self):
         """Основной цикл работы бота"""
         print("SmartBot запущен!")
-        self.frontend.activate_interface('console')
         
-        while True:
-            user_input = self.frontend.get_input()
-            if user_input.lower() == 'exit':
-                break
-            
-            # Обработка сообщения в backend
-            response = self.backend.process_message(user_input)
-            
-            # Отправка ответа через frontend
-            self.frontend.send_response(response)
-
-if __name__ == "__main__":
-    bot = SmartBot()
-    bot.run()
+        # Запуск админской консоли в отдельном потоке
+        if os.getenv('ADMIN_MODE') == 'console':
+            import threading
+            threading.Thread(target=self.admin_console.run, daemon=True).start()
+        
+        # ... остальной код без изменений ...
