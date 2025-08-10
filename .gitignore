@@ -18,3 +18,9 @@ test_report.txt
 # Telegram session files
 *.session
 *.session-journal
+# DevOS reports
+devos_report.json
+devos_backups/
+
+# Test logs
+logs/test.log

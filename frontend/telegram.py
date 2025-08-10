@@ -45,8 +45,12 @@ class TelegramInterface:
         user_input = update.message.text
         self.logger.info(f"Received message: {user_input}")
         
-        # Process message through backend
-        response = self.backend.process_message(user_input)
+        try:
+            # Process message through backend with error handling
+            response = self.backend.process_message(user_input)
+        except Exception as e:
+            self.logger.error(f"Ошибка обработки сообщения: {str(e)}")
+            response = "Произошла внутренняя ошибка. Пожалуйста, попробуйте позже."
         
         # Send response
         await update.message.reply_text(response)
