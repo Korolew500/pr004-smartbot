@@ -32,3 +32,4 @@ class AdminConsole:
                 break
             except Exception as e:
                 print(f"Ошибка: {str(e)}")
+                break
