@@ -1,5 +1,5 @@
 ...
-    def test_remove_synonym(self):
+def test_remove_synonym(self):
         """Тест удаления синонима"""
         self.mock_backend.synonym_mapper.synonym_map = {"test_base": ["test_syn"]}
         with patch('builtins.print') as mock_print:
