@@ -1,12 +1,10 @@
-
 <div class='search-section'>
   <h2>Поиск синонимов</h2>
   <input type='text' id='searchInput' placeholder='Введите слово...'>
   <button onclick='searchSynonyms()'>Найти</button>
   <div id='searchResults'></div>
 </div>
-...
-    <script>
+...<script>
         ...
         async function removeSynonym(baseWord, synonym) {
             if (!confirm(`Удалить синоним "${synonym}"?`)) return;
