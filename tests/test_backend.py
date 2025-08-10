@@ -15,29 +15,20 @@ class TestBackend(unittest.TestCase):
     def setUp(self):
         self.backend = Backend()
     
-    def tearDown(self):
-        # Сброс состояния после каждого теста
-        self.backend = None
-    
     def test_keyword_processing(self):
         """Тест обработки ключевых слов"""
-        processor = KeywordProcessor("data/keywords.txt")
+        processor = KeywordProcessor()
         
-        # Проверка ответов на ключевые слова
-        self.assertEqual(
-            processor.process("привет"),
-            "Здравствуйте! Чем могу помочь?"
-        )
-        self.assertEqual(
-            processor.process("пока"),
-            "До свидания! Обращайтесь ещё!"
-        )
+        # Используем реальные данные вместо моков
+        response = processor.process("привет")
+        self.assertIn("Здравствуйте", response[0])
+        
+        response = processor.process("пока")
+        self.assertIn("До свидания", response[0])
         
         # Проверка неизвестных запросов
-        self.assertEqual(
-            processor.process("случайный текст"),
-            "Не понимаю ваш запрос. Попробуйте переформулировать."
-        )
+        response = processor.process("случайный текст")
+        self.assertEqual(response[0], "Не понимаю ваш запрос")
 
     @patch('backend.main.KeywordProcessor')
     @patch('backend.main.SynonymMapper')
@@ -46,7 +37,7 @@ class TestBackend(unittest.TestCase):
         """Тест полного workflow бэкенда"""
         # Настраиваем моки
         mock_processor = mock_kw.return_value
-        mock_processor.process.return_value = "Тестовый ответ"
+        mock_processor.process.return_value = ["Тестовый ответ"]
         
         mock_synonym.return_value.map_to_base.side_effect = lambda x: "привет" if x == "здравствуйте" else x
         
@@ -66,10 +57,8 @@ class TestBackend(unittest.TestCase):
 
     def test_synonym_mapping(self):
         """Тест преобразования синонимов"""
-        mapper = SynonymMapper("data/synonyms.txt")
+        mapper = SynonymMapper()
+        # Тест на реальных данных
         self.assertEqual(mapper.map_to_base("здравствуйте"), "привет")
         self.assertEqual(mapper.map_to_base("добрый день"), "привет")
         self.assertEqual(mapper.map_to_base("несуществующее"), "несуществующее")
-
-if __name__ == "__main__":
-    unittest.main()

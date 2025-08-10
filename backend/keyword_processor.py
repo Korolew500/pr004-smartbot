@@ -17,7 +17,14 @@ class KeywordProcessor:
         for keyword, data in keywords_data.items():
             self.keyword_responses[keyword] = data.get("response", "")
 
-    # ... существующий код ...
+    def extract_keywords(self, text):
+        """Извлекает ключевые слова из текста"""
+        found = []
+        text_lower = text.lower()
+        for keyword in self.keyword_responses:
+            if keyword.lower() in text_lower:
+                found.append(keyword)
+        return found
 
     def process(self, text, max_responses=3):
         """Возвращает несколько подходящих ответов"""

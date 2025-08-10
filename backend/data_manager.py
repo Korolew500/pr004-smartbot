@@ -19,7 +19,6 @@ class DataManager:
             json_path = os.path.join(self.base_dir, f"{filename}.json")
             txt_path = os.path.join(self.base_dir, f"{filename}.txt")
             
-            # Try loading JSON first
             if os.path.exists(json_path):
                 try:
                     with open(json_path, 'r', encoding='utf-8') as f:
@@ -27,7 +26,6 @@ class DataManager:
                 except Exception as e:
                     logger.error(f"Error loading {json_path}: {str(e)}")
             
-            # Fallback to TXT
             if os.path.exists(txt_path):
                 return self._convert_txt_to_json(txt_path, json_path)
                 
@@ -46,7 +44,8 @@ class DataManager:
                     if not line or line.startswith('#'):
                         continue
                     
-                    if 'keywords' in txt_path:
+                    filename = os.path.basename(txt_path)
+                    if 'keywords' in filename:
                         parts = [p.strip() for p in line.split('|')]
                         if len(parts) >= 3:
                             key = parts[0]
@@ -55,31 +54,37 @@ class DataManager:
                                 "response": parts[2],
                                 "context": parts[3] if len(parts) > 3 else "general"
                             }
-                    elif 'synonyms' in txt_path:
+                    elif 'synonyms' in filename:
                         parts = [p.strip() for p in line.split('|')]
                         if len(parts) >= 2:
                             base_word = parts[0]
                             synonyms = [s.strip() for s in parts[1].split(',')]
                             data[base_word] = synonyms
+                    else:
+                        parts = line.split('|', 1)
+                        if len(parts) == 2:
+                            key = parts[0].strip()
+                            value = parts[1].strip()
+                            if ',' in value:
+                                data[key] = [v.strip() for v in value.split(',')]
+                            else:
+                                data[key] = value
             
-            # Save as JSON for future use
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
                 
-            logger.info(f"Converted {txt_path} to {json_path}")
             return data
-            
         except Exception as e:
             logger.exception(f"Ошибка конвертации {txt_path}")
             return {}
-
-    def save_data(self, filename: str, data: Union[Dict, List]):
-        """Save data to JSON"""
+            
+    def save_data(self, filename: str, data: Union[Dict, List]) -> bool:
+        """Save data to JSON file"""
         try:
             json_path = os.path.join(self.base_dir, f"{filename}.json")
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            logger.exception(f"Ошибка сохранения {json_path}")
+            logger.error(f"Ошибка сохранения данных: {str(e)}")
             return False

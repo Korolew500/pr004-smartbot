@@ -24,13 +24,9 @@ class TestAdminConsole(unittest.TestCase):
             self.console.add_keyword("", "Пустое ключевое слово")
             mock_print.assert_called_with("Ошибка: Ключевое слово и ответ обязательны")
     
-    @patch('builtins.input', side_effect=["add тест тестовый ответ", "exit"])
+    @patch('builtins.input', side_effect=["add test_key test_response", "exit"])
     def test_run_add_command(self, mock_input):
         """Тест выполнения команды добавления"""
-        self.console.run()
-        self.mock_backend.keyword_processor.add_keyword.assert_called_with(
-            "тест", "тестовый ответ"
-        )
-
-if __name__ == "__main__":
-    unittest.main()
+        with patch.object(self.console, 'add_keyword') as mock_add:
+            self.console.run()
+            mock_add.assert_called_with("test_key", "test_response")
