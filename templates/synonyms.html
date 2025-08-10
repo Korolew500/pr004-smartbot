@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Управление синонимами</title>
+    <style>
+        .synonym-card { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .synonym-item { display: inline-block; margin-right: 10px; padding: 5px 10px; background: #f0f0f0; border-radius: 3px; }
+    </style>
+    <script>
+        async function addSynonym() {
+            const baseWord = document.getElementById('base_word').value;
+            const synonym = document.getElementById('synonym').value;
+            
+            const formData = new FormData();
+            formData.append('base_word', baseWord);
+            formData.append('synonym', synonym);
+            
+            try {
+                const response = await fetch('/add_synonym', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    alert(`✅ ${data.message}`);
+                    location.reload(); // Обновляем страницу
+                } else {
+                    alert(`❌ Ошибка: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Сетевая ошибка: ${error.message}`);
+            }
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Управление синонимами</h1>
+        <a href="/">Назад в панель управления</a>
+    </header>
+    
+    <div>
+        <h2>Добавить новый синоним</h2>
+        <div>
+            <label>Базовое слово:</label>
+            <input type="text" id="base_word" required>
+        </div>
+        <div>
+            <label>Синоним:</label>
+            <input type="text" id="synonym" required>
+        </div>
+        <button onclick="addSynonym()">Добавить</button>
+    </div>
+    
+    <div>
+        <h2>Текущие синонимы</h2>
+        {% for base_word, synonyms in synonyms.items() %}
+        <div class="synonym-card">
+            <h3>{{ base_word }}</h3>
+            <div>
+                {% for synonym in synonyms %}
+                <span class="synonym-item">{{ synonym }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

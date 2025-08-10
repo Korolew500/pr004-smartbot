@@ -1,34 +1,29 @@
-"""Веб-интерфейс администратора с аутентификацией и статистикой"""
+"""Веб-интерфейс администратора с управлением синонимами"""
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from backend.admin_console import AdminConsole
 import time
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Секретный ключ для сессий
+app.secret_key = 'your_secret_key'
 
-# Глобальная ссылка на консоль администратора
 admin_console = None
 
-# Конфигурация аутентификации
 ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'secure_password'
 
 def init_web_admin(console: AdminConsole):
-    """Инициализация веб-интерфейса администратора"""
     global admin_console
     admin_console = console
     print("Веб-интерфейс администратора инициализирован")
 
 @app.before_request
 def check_auth():
-    """Проверка аутентификации для защищенных маршрутов"""
     if request.endpoint not in ['login', 'static'] and not session.get('authenticated'):
         return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Страница входа"""
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -38,24 +33,49 @@ def login():
             return redirect(url_for('admin_dashboard'))
         else:
             return render_template('login.html', error="Неверные учетные данные")
-    
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    """Выход из системы"""
     session.pop('authenticated', None)
     return redirect(url_for('login'))
 
 @app.route('/')
 def admin_dashboard():
-    """Панель управления администратора"""
     return render_template('admin_dashboard.html')
+
+@app.route('/synonyms')
+def synonyms_management():
+    """Страница управления синонимами"""
+    if not admin_console:
+        return "AdminConsole не инициализирован", 500
+    
+    synonyms_data = admin_console.get_synonyms()
+    return render_template('synonyms.html', synonyms=synonyms_data)
+
+@app.route('/add_synonym', methods=['POST'])
+def add_synonym():
+    """Добавление нового синонима"""
+    if not admin_console:
+        return jsonify({"error": "AdminConsole не инициализирован"}), 500
+    
+    base_word = request.form.get('base_word')
+    synonym = request.form.get('synonym')
+    
+    if not base_word or not synonym:
+        return jsonify({"error": "Базовое слово и синоним обязательны"}), 400
+    
+    try:
+        result = admin_console.add_synonym(base_word, synonym)
+        if result:
+            return jsonify({"message": f"Добавлен синоним: {synonym} → {base_word}"})
+        else:
+            return jsonify({"error": "Ошибка при добавлении синонима"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Системная ошибка: {str(e)}"}), 500
 
 @app.route('/stats')
 def stats():
-    """Статистика использования"""
-    # Заглушка для статистики (реальная реализация потребует сбора данных)
     stats_data = {
         "users": 42,
         "keywords": 15,
@@ -66,25 +86,7 @@ def stats():
 
 @app.route('/add_keyword', methods=['POST'])
 def add_keyword():
-    """Добавление ключевого слова через веб-интерфейс"""
-    global admin_console
-    if not admin_console:
-        return jsonify({"error": "AdminConsole не инициализирован"}), 500
-    
-    keyword = request.form.get('keyword')
-    response = request.form.get('response')
-    
-    if not keyword or not response:
-        return jsonify({"error": "Ключевое слово и ответ обязательны"}), 400
-    
-    try:
-        result = admin_console.add_keyword(keyword, response)
-        if result:
-            return jsonify({"message": f"Добавлено: {keyword} → {response}"})
-        else:
-            return jsonify({"error": "Ошибка при добавлении ключевого слова"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Системная ошибка: {str(e)}"}), 500
+    # ... существующий код ...
 
 @app.errorhandler(404)
 def not_found_error(error):
