@@ -35,7 +35,7 @@ os.system("pip install -r requirements.txt")
 
 
 # Функция для сохранения результатов тестов
-def save_test_results(results, file_path="../devos_report.json"):
+def save_test_results(results, file_path="devos_report.json"):
     try:
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:

@@ -4,51 +4,87 @@
   <button onclick='searchSynonyms()'>Найти</button>
   <div id='searchResults'></div>
 </div>
-...<script>
-        ...
-        async function removeSynonym(baseWord, synonym) {
-            if (!confirm(`Удалить синоним "${synonym}"?`)) return;
-            
-            const formData = new FormData();
-            formData.append('base_word', baseWord);
-            formData.append('synonym', synonym);
-            
-            try {
-                const response = await fetch('/remove_synonym', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                if (response.ok) {
-                    alert(`✅ ${data.message}`);
-                    location.reload();
-                } else {
-                    alert(`❌ Ошибка: ${data.error}`);
-                }
-            } catch (error) {
-                alert(`❌ Сетевая ошибка: ${error.message}`);
-            }
-        }
-    </script>
-</head>
-<body>
-    ...
+
+<div>
+  <h2>Добавление синонима</h2>
+  <input type='text' id='baseWord' placeholder='Базовое слово'>
+  <input type='text' id='newSynonym' placeholder='Новый синоним'>
+  <button onclick='addSynonym()'>Добавить</button>
+</div>
+
+<div>
+  <h2>Текущие синонимы</h2>
+  {% for base_word, synonyms in synonyms.items() %}
+  <div class="synonym-card">
+    <h3>{{ base_word }}</h3>
     <div>
-        <h2>Текущие синонимы</h2>
-        {% for base_word, synonyms in synonyms.items() %}
-        <div class="synonym-card">
-            <h3>{{ base_word }}</h3>
-            <div>
-                {% for synonym in synonyms %}
-                <span class="synonym-item">
-                    {{ synonym }}
-                    <button onclick="removeSynonym('{{ base_word }}', '{{ synonym }}')">✕</button>
-                </span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
+      {% for synonym in synonyms %}
+      <span class="synonym-item">
+        {{ synonym }}
+        <button onclick="removeSynonym('{{ base_word }}', '{{ synonym }}')">✕</button>
+      </span>
+      {% endfor %}
     </div>
-</body>
-</html>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  async function searchSynonyms() {
+    const query = document.getElementById('searchInput').value;
+    const response = await fetch(`/search_synonyms?q=${encodeURIComponent(query)}`);
+    const results = await response.json();
+    // ... логика отображения ...
+  }
+
+  async function addSynonym() {
+    const baseWord = document.getElementById('baseWord').value;
+    const synonym = document.getElementById('newSynonym').value;
+    
+    const formData = new FormData();
+    formData.append('base_word', baseWord);
+    formData.append('synonym', synonym);
+    
+    try {
+      const response = await fetch('/add_synonym', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        alert(`✅ ${data.message}`);
+        location.reload();
+      } else {
+        alert(`❌ Ошибка: ${data.error}`);
+      }
+    } catch (error) {
+      alert(`❌ Сетевая ошибка: ${error.message}`);
+    }
+  }
+
+  async function removeSynonym(baseWord, synonym) {
+    if (!confirm(`Удалить синоним "${synonym}"?`)) return;
+    
+    const formData = new FormData();
+    formData.append('base_word', baseWord);
+    formData.append('synonym', synonym);
+    
+    try {
+      const response = await fetch('/remove_synonym', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        alert(`✅ ${data.message}`);
+        location.reload();
+      } else {
+        alert(`❌ Ошибка: ${data.error}`);
+      }
+    } catch (error) {
+      alert(`❌ Сетевая ошибка: ${error.message}`);
+    }
+  }
+</script>
