@@ -1,5 +1,14 @@
-...
-def test_remove_synonym(self):
+import unittest
+from unittest.mock import MagicMock, patch
+from backend.admin_console import AdminConsole
+
+class TestAdminConsole(unittest.TestCase):
+    def setUp(self):
+        # Создаем мок бэкенда
+        self.mock_backend = MagicMock()
+        self.console = AdminConsole(self.mock_backend)
+
+    def test_remove_synonym(self):
         """Тест удаления синонима"""
         self.mock_backend.synonym_mapper.synonym_map = {"test_base": ["test_syn"]}
         with patch('builtins.print') as mock_print:
