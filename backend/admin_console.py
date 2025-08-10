@@ -3,24 +3,32 @@ class AdminConsole:
         self.backend = backend
         
     def add_keyword(self, keyword, response):
-        """Добавляет ключевое слово"""
-        # Логика добавления в DataManager
-        print(f"Added keyword: {keyword} -> {response}")
-        
-    def export_data(self, format='json'):
-        """Экспорт данных"""
-        print(f"Exporting data in {format} format")
-        
+        """Добавляет ключевое слово с валидацией"""
+        if not keyword or not response:
+            print("Ошибка: Ключевое слово и ответ обязательны")
+            return
+            
+        try:
+            self.backend.keyword_processor.add_keyword(keyword, response)
+            print(f"Added keyword: {keyword} -> {response}")
+        except Exception as e:
+            print(f"Ошибка при добавлении ключевого слова: {str(e)}")
+    
+    # ... остальные методы ...
+    
     def run(self):
-        """Интерактивная консоль"""
+        """Интерактивная консоль с обработкой ошибок"""
+        print("Административная консоль запущена. Введите 'help' для справки")
         while True:
-            command = input("Admin> ").split()
-            if not command:
-                continue
+            try:
+                command = input("Admin> ").strip()
+                if not command:
+                    continue
                 
-            if command[0] == "add":
-                self.add_keyword(command[1], " ".join(command[2:]))
-            elif command[0] == "export":
-                self.export_data(command[1] if len(command)>1 else 'json')
-            elif command[0] == "exit":
+                # ... обработка команд ...
+                
+            except KeyboardInterrupt:
+                print("\nЗавершение работы...")
                 break
+            except Exception as e:
+                print(f"Ошибка: {str(e)}")

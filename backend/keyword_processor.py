@@ -11,9 +11,15 @@ class KeywordProcessor:
         self.morph = pymorphy3.MorphAnalyzer()
         self._load_keywords()
 
+    def _load_keywords(self):
+        """Загружает ключевые слова из файла через DataManager"""
+        keywords_data = self.data_manager.load_data("keywords")
+        for keyword, data in keywords_data.items():
+            self.keyword_responses[keyword] = data.get("response", "")
+
     # ... существующий код ...
 
-    def process(self, text, max_responses=3):  # <-- NEW PARAMETER
+    def process(self, text, max_responses=3):
         """Возвращает несколько подходящих ответов"""
         keywords = self.extract_keywords(text)
         responses = []
