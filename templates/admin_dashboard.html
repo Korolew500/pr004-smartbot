@@ -2,14 +2,89 @@
 <html>
 <head>
     <title>Панель управления SmartBot</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-container { display: flex; margin-bottom: 20px; }
+        .stat-card { padding: 15px; margin-right: 10px; background: #f5f5f5; border-radius: 5px; }
+    </style>
+    <script>
+        async function loadStats() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                
+                // Обновление статистических карточек
+                document.getElementById('user-count').textContent = data.users;
+                document.getElementById('keyword-count').textContent = data.keywords;
+                document.getElementById('requests-count').textContent = data.requests_today;
+                
+                // Конвертация времени аптайма в часы
+                const uptimeHours = Math.floor(data.uptime / 3600);
+                document.getElementById('uptime').textContent = `${uptimeHours} часов`;
+                
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+        
+        async function addKeyword() {
+            const keyword = document.getElementById('keyword').value;
+            const response = document.getElementById('response').value;
+            
+            const formData = new FormData();
+            formData.append('keyword', keyword);
+            formData.append('response', response);
+            
+            try {
+                const result = await fetch('/add_keyword', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await result.json();
+                if (result.ok) {
+                    alert(`✅ ${data.message}`);
+                } else {
+                    alert(`❌ Ошибка: ${data.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Сетевая ошибка: ${error.message}`);
+            }
+        }
+        
+        // Загрузка статистики при открытии страницы
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
 </head>
 <body>
-    <h1>Администрирование SmartBot</h1>
+    <header>
+        <h1>Администрирование SmartBot</h1>
+        <a href="/logout">Выйти</a>
+    </header>
     
-    <form action="/add_keyword" method="post">
+    <div class="stats-container">
+        <div class="stat-card">
+            <h3>Пользователи</h3>
+            <p id="user-count">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Ключевые слова</h3>
+            <p id="keyword-count">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Запросы (сегодня)</h3>
+            <p id="requests-count">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Аптайм</h3>
+            <p id="uptime">0 часов</p>
+        </div>
+    </div>
+    
+    <form id="keywordForm" onsubmit="event.preventDefault(); addKeyword();">
         <h2>Добавить ключевое слово</h2>
-        <input type="text" name="keyword" placeholder="Ключевое слово" required>
-        <textarea name="response" placeholder="Ответ" required></textarea>
+        <input type="text" id="keyword" placeholder="Ключевое слово" required>
+        <textarea id="response" placeholder="Ответ" required></textarea>
         <button type="submit">Добавить</button>
     </form>
     

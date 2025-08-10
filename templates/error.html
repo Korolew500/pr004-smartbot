@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ошибка {{ error_code }}</title>
+</head>
+<body>
+    <h1>Ошибка {{ error_code }}</h1>
+    {% if error_code == 404 %}
+        <p>Страница не найдена</p>
+    {% elif error_code == 500 %}
+        <p>Внутренняя ошибка сервера</p>
+    {% endif %}
+    <a href="/">Вернуться на главную</a>
+</body>
+</html>
