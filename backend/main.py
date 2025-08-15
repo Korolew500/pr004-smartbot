@@ -1,5 +1,6 @@
 """Основной модуль backend"""
 
+import os
 from .keyword_processor import KeywordProcessor
 from .synonym_mapper import SynonymMapper
 from .spell_checker import SpellChecker
@@ -31,7 +32,13 @@ class Backend:
         }
         
         for data_type, file_path in data_files.items():
-            mod_time = os.path.getmtime(file_path)
+            full_path = os.path.join(os.path.dirname(__file__), '..', file_path)
+            abs_path = os.path.abspath(full_path)
+            
+            if not os.path.exists(abs_path):
+                continue
+                
+            mod_time = os.path.getmtime(abs_path)
             
             if data_type not in self.data_refresh_time or mod_time > self.data_refresh_time[data_type]:
                 self.data_refresh_time[data_type] = mod_time
@@ -60,4 +67,41 @@ class Backend:
         
         return "Пожалуйста, уточните ваш вопрос"
     
-    # ... остальной код без изменений ...
+    def _select_best_response(self, responses):
+        """Выбирает лучший ответ на основе приоритетов"""
+        if not responses:
+            return "Не понимаю запрос"
+            
+        # Сортируем ответы по приоритету
+        sorted_responses = sorted(
+            responses,
+            key=lambda r: self.response_priority.get(
+                r.get("type", "общий"), 
+                3
+            ),
+            reverse=True
+        )
+        return sorted_responses[0]["response"]
+
+    def toggle_module(self, module_name, state):
+        """Включает/выключает модули обработки"""
+        if module_name in self.active_modules:
+            self.active_modules[module_name] = state
+            return True
+        return False
+        
+    def add_keyword(self, keyword, response, ktype="общий"):
+        """Добавляет ключевое слово"""
+        return self.keyword_processor.add_keyword(keyword, response, ktype)
+        
+    def remove_keyword(self, keyword):
+        """Удаляет ключевое слово"""
+        return self.keyword_processor.remove_keyword(keyword)
+        
+    def add_synonym(self, base_word, synonym):
+        """Добавляет синоним"""
+        return self.synonym_mapper.add_synonym(base_word, synonym)
+        
+    def remove_synonym(self, base_word, synonym):
+        """Удаляет синоним"""
+        return self.synonym_mapper.remove_synonym(base_word, synonym)
