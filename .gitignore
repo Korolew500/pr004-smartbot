@@ -21,6 +21,8 @@ test_report.txt
 
 # DevOS reports
 devos_report.json
+devos_context.json
+devos_instructions.json
 devos_backups/
 
 # Test logs
