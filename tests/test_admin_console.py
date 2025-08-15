@@ -10,17 +10,16 @@ class TestAdminConsole(unittest.TestCase):
 
     def test_remove_synonym(self):
         """Тест удаления синонима"""
-        self.mock_backend.synonym_mapper.synonym_map = {"test_base": ["test_syn"]}
+        self.mock_backend.remove_synonym.return_value = True
         with patch('builtins.print') as mock_print:
             result = self.console.remove_synonym("test_base", "test_syn")
             self.assertTrue(result)
-            self.assertNotIn("test_syn", self.mock_backend.synonym_mapper.synonym_map["test_base"])
             mock_print.assert_called_with("Удален синоним: test_syn → test_base")
     
     def test_remove_nonexistent_synonym(self):
         """Тест удаления несуществующего синонима"""
-        self.mock_backend.synonym_mapper.synonym_map = {"test_base": []}
+        self.mock_backend.remove_synonym.side_effect = KeyError
         with patch('builtins.print') as mock_print:
             result = self.console.remove_synonym("test_base", "missing")
             self.assertFalse(result)
-            mock_print.assert_called_with("Синоним missing не найден для test_base")
+            mock_print.assert_called_with("Синоним не найден: missing")

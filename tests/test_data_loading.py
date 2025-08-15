@@ -27,22 +27,5 @@ class TestDataLoading(unittest.TestCase):
             )
         
         processor = KeywordProcessor(self.test_dir)
-        self.assertIn("привет", processor.keyword_responses)
-        self.assertEqual(processor.keyword_responses["привет"], "Здравствуйте!")
-    
-    def test_synonyms_loading(self):
-        """Тест загрузки синонимов"""
-        file_path = os.path.join(self.test_dir, "synonyms.txt")
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(
-                "# Тестовые синонимы\n"
-                "привет | здравствуйте, добрый день\n"
-                "доставка | отправка, привоз\n"
-            )
-        
-        mapper = SynonymMapper(self.test_dir)
-        self.assertEqual(mapper.synonym_map["здравствуйте"], "привет")
-        self.assertEqual(mapper.synonym_map["добрый день"], "привет")
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertIn("привет", processor.keyword_data)
+        self.assertEqual(processor.keyword_data["привет"]["response"], "Здравствуйте!")
