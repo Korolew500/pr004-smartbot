@@ -21,9 +21,31 @@ class Backend:
             "продукт": 5,
             "техподдержка": 8
         }
+        self.data_refresh_time = {}  # Трекер времени изменения данных
+
+    def check_data_updates(self):
+        """Проверяет обновления файлов данных"""
+        data_files = {
+            "keywords": "data/keywords.json",
+            "synonyms": "data/synonyms.json"
+        }
+        
+        for data_type, file_path in data_files.items():
+            mod_time = os.path.getmtime(file_path)
+            
+            if data_type not in self.data_refresh_time or mod_time > self.data_refresh_time[data_type]:
+                self.data_refresh_time[data_type] = mod_time
+                
+                if data_type == "keywords":
+                    self.keyword_processor._load_keywords()
+                elif data_type == "synonyms":
+                    self.synonym_mapper._load_synonyms()
+                print(f"Обновлены данные: {data_type}")
 
     def process_message(self, message):
         """Обработка входящего сообщения"""
+        self.check_data_updates()  # Проверка обновлений перед обработкой
+        
         if self.active_modules['spell_check']:
             message = self.spell_checker.correct_text(message)
             
@@ -38,41 +60,4 @@ class Backend:
         
         return "Пожалуйста, уточните ваш вопрос"
     
-    def _select_best_response(self, responses):
-        """Выбирает лучший ответ на основе приоритетов"""
-        if not responses:
-            return "Не понимаю запрос"
-            
-        # Сортируем ответы по приоритету
-        sorted_responses = sorted(
-            responses,
-            key=lambda r: self.response_priority.get(
-                r.get("type", "общий"), 
-                3
-            ),
-            reverse=True
-        )
-        return sorted_responses[0]["response"]
-
-    def toggle_module(self, module_name, state):
-        """Включает/выключает модули обработки"""
-        if module_name in self.active_modules:
-            self.active_modules[module_name] = state
-            return True
-        return False
-        
-    def add_keyword(self, keyword, response, ktype="общий"):
-        """Добавляет ключевое слово"""
-        return self.keyword_processor.add_keyword(keyword, response, ktype)
-        
-    def remove_keyword(self, keyword):
-        """Удаляет ключевое слово"""
-        return self.keyword_processor.remove_keyword(keyword)
-        
-    def add_synonym(self, base_word, synonym):
-        """Добавляет синоним"""
-        return self.synonym_mapper.add_synonym(base_word, synonym)
-        
-    def remove_synonym(self, base_word, synonym):
-        """Удаляет синоним"""
-        return self.synonym_mapper.remove_synonym(base_word, synonym)
+    # ... остальной код без изменений ...

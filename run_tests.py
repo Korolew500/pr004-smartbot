@@ -58,39 +58,33 @@ def save_test_results(results, file_path="devos_report.json"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run project tests')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('-p', '--parallel', type=int, default=1, help='Number of parallel processes')
     args = parser.parse_args()
 
-    loader = unittest.TestLoader()
-    suite = loader.discover('tests')
-
-    runner = unittest.TextTestRunner(verbosity=2 if args.verbose else 1)
-
+    # Настройка параллельного запуска
+    test_runner = unittest.TextTestRunner(verbosity=2 if args.verbose else 1)
+    
+    if args.parallel > 1:
+        try:
+            from concurrencytest import ConcurrentTestSuite, fork_for_tests
+            loader = unittest.TestLoader()
+            suite = loader.discover('tests')
+            concurrent_suite = ConcurrentTestSuite(suite, fork_for_tests(args.parallel))
+            result = test_runner.run(concurrent_suite)
+        except ImportError:
+            print("Для параллельного запуска установите concurrencytest: pip install concurrencytest")
+            sys.exit(1)
+    else:
+        loader = unittest.TestLoader()
+        suite = loader.discover('tests')
+        result = test_runner.run(suite)
+    
     test_results = {
-        "tests_run": 0,
-        "errors": [],
-        "failures": [],
-        "successful": 0
+        "tests_run": result.testsRun,
+        "errors": [{"test": str(t[0]), "traceback": t[1]} for t in result.errors],
+        "failures": [{"test": str(t[0]), "traceback": t[1]} for t in result.failures],
+        "successful": result.testsRun - len(result.errors) - len(result.failures)
     }
-
-    try:
-        result = runner.run(suite)
-        test_results["tests_run"] = result.testsRun
-        test_results["successful"] = result.testsRun - len(result.errors) - len(result.failures)
-
-        for test, trace in result.errors:
-            test_results["errors"].append({
-                "test": str(test),
-                "traceback": trace
-            })
-
-        for test, trace in result.failures:
-            test_results["failures"].append({
-                "test": str(test),
-                "traceback": trace
-            })
-    except Exception as e:
-        test_results["error"] = str(e)
-        test_results["traceback"] = traceback.format_exc()
 
     save_test_results(test_results)
     print(f"Тестов выполнено: {test_results['tests_run']}")
