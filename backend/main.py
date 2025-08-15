@@ -68,20 +68,25 @@ class Backend:
         return "Пожалуйста, уточните ваш вопрос"
     
     def _select_best_response(self, responses):
-        """Выбирает лучший ответ на основе приоритетов"""
+        """Возвращает до 3 уникальных ответов"""
         if not responses:
             return "Не понимаю запрос"
             
-        # Сортируем ответы по приоритету
-        sorted_responses = sorted(
-            responses,
-            key=lambda r: self.response_priority.get(
-                r.get("type", "общий"), 
-                3
-            ),
-            reverse=True
-        )
-        return sorted_responses[0]["response"]
+        # Ограничим количество ответов
+        max_responses = 3
+        if len(responses) > max_responses:
+            responses = responses[:max_responses]
+            
+        # Соберем уникальные ответы
+        unique_responses = []
+        seen_responses = set()
+        for resp in responses:
+            text = resp["response"]
+            if text not in seen_responses:
+                seen_responses.add(text)
+                unique_responses.append(text)
+                
+        return "\n".join(unique_responses)
 
     def toggle_module(self, module_name, state):
         """Включает/выключает модули обработки"""
