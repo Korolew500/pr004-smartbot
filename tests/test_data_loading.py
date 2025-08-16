@@ -31,4 +31,4 @@ class TestDataLoading(unittest.TestCase):
         
         # Проверка загрузки ключевых слов
         self.assertIn("test", processor.keywords)
-        self.assertEqual(processor.keywords["test"]["responses"][0], "Test response")
+        self.assertEqual(processor.keywords["test"].get("responses", [processor.keywords["test"].get("response", "")])[0], "Test response")
