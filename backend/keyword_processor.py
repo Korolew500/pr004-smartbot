@@ -1,37 +1,43 @@
-import json
-import os
-import logging
+import re
+from collections import OrderedDict
 
 class KeywordProcessor:
     def __init__(self):
         self.keywords = {}
-        self.logger = logging.getLogger('keyword_processor')
-        self._load_keywords()
+        self._keyword_trie_dict = {}
+
+    def add_keyword(self, keyword, response):
+        self.keywords[keyword] = response
+        current_dict = self._keyword_trie_dict
+        for char in keyword:
+            current_dict = current_dict.setdefault(char, {})
+        current_dict['__kw__'] = keyword
+
+    def extract_keywords(self, text):
+        """Извлекает ключевые слова с приоритетом длинных фраз"""
+        found_keywords = OrderedDict()
+        text_lower = text.lower()
         
-    def _load_keywords(self):
-        try:
-            file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'keywords.json')
-            with open(file_path, 'r', encoding='utf-8') as f:
-                self.keywords = json.load(f)
-            self.logger.info(f"Загружено {len(self.keywords)} ключевых слов")
-        
-            # Сортировка по длине фразы (длинные - в первую очередь)
-            self.sorted_keywords = sorted(
-                self.keywords.keys(), 
-                key=len, 
-                reverse=True
-            )
-        except Exception as e:
-            self.logger.error(f"Ошибка загрузки ключевых слов: {str(e)}")
-            
-    def extract_keywords(self, message):
-        found_keywords = []
-        
-        # Поиск сначала длинных фраз, потом коротких
-        for keyword in self.sorted_keywords:
-            if keyword in message:
-                found_keywords.append(keyword)
-                # Удаляем найденную фразу из сообщения
-                message = message.replace(keyword, "", 1)
+        # Поиск самых длинных совпадений
+        for i in range(len(text_lower)):
+            current_dict = self._keyword_trie_dict
+            for j in range(i, len(text_lower)):
+                char = text_lower[j]
+                if char not in current_dict:
+                    break
                 
-        return found_keywords
+                current_dict = current_dict[char]
+                if '__kw__' in current_dict:
+                    keyword = current_dict['__kw__']
+                    # Перезаписываем более короткие вхождения
+                    found_keywords[keyword] = self.keywords[keyword]
+                    
+                    # Пропускаем символы найденного ключевого слова
+                    i = j
+                    break
+        
+        return list(found_keywords.keys())
+
+    def get_response(self, keyword):
+        """Возвращает ответ для ключевого слова"""
+        return self.keywords.get(keyword, None)

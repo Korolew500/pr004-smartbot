@@ -1,71 +1,57 @@
-import os
-import logging
+import random
+import json
 import re
 from .keyword_processor import KeywordProcessor
 from .spell_checker import SpellChecker
-from .synonym_mapper import SynonymMapper
 
 class Backend:
     def __init__(self):
         self.keyword_processor = KeywordProcessor()
         self.spell_checker = SpellChecker()
-        self.synonym_mapper = SynonymMapper()
-        self.logger = logging.getLogger('backend')
-        self.stop_words = self.load_stop_words()
+        self.default_response = "Извините, я не понял вопрос. Можете переформулировать?"
+        self.load_keywords()
 
-    def load_stop_words(self):
-        stop_words_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'stop_words.txt')
-        stop_words = set()
-        try:
-            with open(stop_words_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    word = line.strip()
-                    if word:
-                        stop_words.add(word)
-        except FileNotFoundError:
-            self.logger.error("Файл стоп-слов не найден")
-        return stop_words
+    def load_keywords(self):
+        with open('data/keywords.json', 'r', encoding='utf-8') as f:
+            keywords_data = json.load(f)
+            
+        for keyword, data in keywords_data.items():
+            # Обработка синонимов
+            synonyms = data.get('synonyms', [])
+            all_keys = [keyword] + synonyms
+            
+            for key in all_keys:
+                self.keyword_processor.add_keyword(
+                    key.lower(), 
+                    data.get('responses', data.get('response', ''))
+                )
 
     def process_message(self, message):
-        try:
-            self.logger.info(f"Обработка сообщения: {message}")
+        # Очистка и нормализация
+        clean_msg = re.sub(r'[^\w\s]', '', message).strip()
+        
+        # Проверка орфографии
+        corrected = self.spell_checker.correct_text(clean_msg)
+        
+        # Извлечение ключевых слов
+        keywords = self.keyword_processor.extract_keywords(corrected.lower())
+        
+        # Формирование ответа
+        responses = []
+        seen_responses = set()
+        
+        for keyword in keywords:
+            response = self.keyword_processor.get_response(keyword)
             
-            # Очистка сообщения
-            clean_msg = re.sub(r'[^\w\s]', '', message).lower()
+            if isinstance(response, list):
+                response = random.choice(response)
             
-            # Удаление стоп-слов (опционально)
-            clean_msg = ' '.join([word for word in clean_msg.split() if word not in self.stop_words])
-            
-            # Исправление орфографии
-            corrected = self.spell_checker.correct_text(clean_msg)
-            if corrected != clean_msg:
-                self.logger.info(f"Исправлено: '{clean_msg}' -> '{corrected}'")
-            
-            # Нормализация текста
-            normalized = self.synonym_mapper.map_to_base(corrected)
-            
-            # Извлечение ключевых фраз с приоритетом длинных
-            keywords = self.keyword_processor.extract_keywords(normalized)
-            
-            # Сбор уникальных ответов
-            responses = []
-            for keyword in keywords:
-                if keyword in self.keyword_processor.keywords:
-                    data = self.keyword_processor.keywords[keyword]
-                    if 'response' in data:
-                        if data['response'] not in responses:
-                            responses.append(data['response'])
-                    elif 'responses' in data:
-                        for r in data['responses']:
-                            if r not in responses:
-                                responses.append(r)
-            
-            # Формирование ответа
-            if responses:
-                return " ".join(responses)
-            else:
-                return "Извините, я не понял вопрос. Можете переформулировать?"
-                
-        except Exception as e:
-            self.logger.error(f"Ошибка обработки: {str(e)}", exc_info=True)
-            return "Произошла внутренняя ошибка. Пожалуйста, повторите позже."
+            # Убираем дубликаты
+            if response not in seen_responses:
+                responses.append(response)
+                seen_responses.add(response)
+        
+        if responses:
+            return ". ".join(responses)
+        
+        return self.default_response
