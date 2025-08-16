@@ -12,6 +12,38 @@ class Backend:
         self.logger = logging.getLogger('backend')
 
     def process_message(self, message):
+        # Удаление пунктуации и приведение к нижнему регистру
+        clean_msg = re.sub(r'[^\w\s]', '', message).lower()
+        
+        # Удаление стоп-слов
+        clean_msg = ' '.join([word for word in clean_msg.split() if word not in self.stop_words])
+        
+        # Исправление орфографии
+        corrected = self.spell_checker.correct_text(clean_msg)
+        
+        # Нормализация текста (приведение к базовой форме)
+        normalized = self.normalize_text(corrected)
+        
+        # Извлечение ВСЕХ ключевых слов
+        keywords = self.keyword_processor.extract_keywords(normalized)
+        
+        # Сбор ВСЕХ ответов
+        responses = []
+        for keyword in keywords:
+            if keyword in self.keyword_processor.keywords:
+                data = self.keyword_processor.keywords[keyword]
+                # Поддержка старого (response) и нового формата (responses)
+                if 'responses' in data:
+                    responses.extend(data['responses'])
+                elif 'response' in data:
+                    responses.append(data['response'])
+        
+        # Формирование составного ответа
+        if responses:
+            # Удаление дубликатов и склейка
+            return " ".join(dict.fromkeys(responses))
+        else:
+            return "Извините, я не понял вопрос. Можете переформулировать?"
         # Исправление орфографии
         corrected = self.spell_checker.correct_text(message)
         

@@ -20,6 +20,32 @@ class TestBackend(unittest.TestCase):
         # Создаем тестовые ключевые слова
         self.bot.keyword_processor.keywords = {
             "мед": {"responses": ["У нас есть липовый мед!"]},
+            "липовый мед": {"response": "Липовый мед: 500 руб/банка"},
+            "стоимость": {"responses": ["Цены уточняйте по телефону"]},
+            "заказ": {"response": "Для заказа нажмите кнопку 'Оформить заказ'"}
+        }
+        
+        # Тест 1: Простой запрос
+        response = self.bot.process_message("Хочу мед")
+        self.assertIn("У нас есть", response)
+        
+        # Тест 2: Составной запрос с пунктуацией
+        response = self.bot.process_message("Хочу липовый мед, какая стоимость?")
+        self.assertIn("липовый мед", response)
+        self.assertIn("Цены уточняйте", response)
+        
+        # Тест 3: Запрос со стоп-словами
+        response = self.bot.process_message("А как мне сделать заказ этого липового меда?")
+        self.assertIn("липовый мед", response)
+        self.assertIn("Оформить заказ", response)
+        
+        # Тест 4: Неизвестный запрос
+        response = self.bot.process_message("Сколько весит слон?")
+        self.assertEqual(response, "Извините, я не понял вопрос. Можете переформулировать?")
+        """Тест составного ответа из нескольких ключевых слов"""
+        # Создаем тестовые ключевые слова
+        self.bot.keyword_processor.keywords = {
+            "мед": {"responses": ["У нас есть липовый мед!"]},
             "липовый": {"response": "Липовый мед: 500 руб/банка"},
             "стоимость": {"responses": ["Цены уточняйте по телефону"]}
         }
