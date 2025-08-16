@@ -39,4 +39,14 @@ class Backend:
 
     def _select_response(self, responses):
         # Логика выбора лучшего ответа
-        return responses[0]['responses'][0]
+        priority_order = ['приветствие', 'прощание', 'продукт', 'информация']
+        for p in priority_order:
+            for r in responses:
+                if r.get('type') == p:
+                    if 'responses' in r:
+                        return r['responses'][0]
+                    return r['response']
+        # Fallback to first response
+        if 'responses' in responses[0]:
+            return responses[0]['responses'][0]
+        return responses[0]['response']

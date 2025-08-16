@@ -25,7 +25,7 @@ class TestBackend(unittest.TestCase):
         self.backend.keyword_processor.process.return_value = mock_responses
         
         result = self.backend.process_message("тест")
-        self.assertEqual(result, "Ответ 3")  # Приветствие имеет высший приоритет
+        self.assertEqual(result, "Ответ 3")  # Проверка приоритизации
     
     # УДАЛЕН: тест на несуществующий метод toggle_module
     

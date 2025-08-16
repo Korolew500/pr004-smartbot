@@ -2,11 +2,11 @@
 
 import unittest
 from unittest.mock import MagicMock
-from backend.processor import BackendProcessor
+from backend.main import Backend
 
 class TestResponseVariability(unittest.TestCase):
     def setUp(self):
-        self.processor = BackendProcessor()
+        self.processor = Backend()
         self.processor.keyword_processor = MagicMock()
         self.processor.spell_checker = MagicMock()
         self.processor.synonym_mapper = MagicMock()
