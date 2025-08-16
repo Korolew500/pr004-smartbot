@@ -1,31 +1,37 @@
-import json
-import os
-import logging
-
 class KeywordProcessor:
     def __init__(self):
         self.keywords = {}
-        self.logger = logging.getLogger('keyword_processor')
-        self._load_keywords()  # Автоматическая загрузка при инициализации
+
+    def load_keywords(self, keywords_data):
+        """Загрузка ключевых слов из JSON"""
+        self.keywords = keywords_data
+
+    def extract_keywords(self, text: str) -> list:
+        """Извлечение ключевых слов с учётом приоритета длинных фраз"""
+        found = []
+        words = text.split()
         
-    def _load_keywords(self):
-        """Загружает ключевые слова из JSON-файла с обработкой ошибок"""
-        try:
-            file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'keywords.json')
-            with open(file_path, 'r', encoding='utf-8') as f:
-                self.keywords = json.load(f)
-            self.logger.info(f"Успешно загружено {len(self.keywords)} ключевых слов")
-        except FileNotFoundError:
-            self.logger.error("Файл keywords.json не найден")
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Ошибка формата JSON: {str(e)}")
-        except Exception as e:
-            self.logger.error(f"Ошибка загрузки ключевых слов: {str(e)}")
+        # Поиск от самых длинных фраз к коротким
+        for length in range(4, 0, -1):
+            for i in range(len(words) - length + 1):
+                phrase = ' '.join(words[i:i+length])
+                if phrase in self.keywords:
+                    found.append(phrase)
+                    # Пропускаем слова, вошедшие в фразу
+                    words[i:i+length] = [''] * length
+        
+        return found
+
+    def get_response(self, keyword):
+        """Получение ответа для ключевого слова"""
+        if keyword not in self.keywords:
+            return None
             
-    def extract_keywords(self, message):
-        """Извлекает все ключевые слова из сообщения"""
-        found_keywords = []
-        for keyword in self.keywords:
-            if keyword in message:
-                found_keywords.append(keyword)
-        return found_keywords
+        data = self.keywords[keyword]
+        
+        if 'responses' in data:
+            return random.choice(data['responses'])
+        elif 'response' in data:
+            return data['response']
+        
+        return None
