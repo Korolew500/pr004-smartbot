@@ -1,4 +1,5 @@
-"""Основной модуль backend"""
+"""Основimport random
+ной модуль backend"""
 
 import os
 from .keyword_processor import KeywordProcessor
@@ -63,30 +64,24 @@ class Backend:
         
         if self.active_modules['keyword_processing']:
             responses = self.keyword_processor.process(message)
-            return self._select_best_response(responses)
+            response = self._select_best_response(responses)
+return self._enhance_response(response)
         
         return "Пожалуйста, уточните ваш вопрос"
     
     def _select_best_response(self, responses):
-        """Возвращает до 3 уникальных ответов"""
+        """Выбирает ответ с наивысшим приоритетом"""
         if not responses:
             return "Не понимаю запрос"
             
-        # Ограничим количество ответов
-        max_responses = 3
-        if len(responses) > max_responses:
-            responses = responses[:max_responses]
-            
-        # Соберем уникальные ответы
-        unique_responses = []
-        seen_responses = set()
-        for resp in responses:
-            text = resp["response"]
-            if text not in seen_responses:
-                seen_responses.add(text)
-                unique_responses.append(text)
-                
-        return "\n".join(unique_responses)
+        # Находим ответ с максимальным приоритетом
+        best_response = max(
+            responses, 
+            key=lambda r: self.response_priority.get(r.get("type", "общий"), 0)
+        )
+        # Добавляем вариативность ответов
+responses = best_response.get("responses", [best_response["response"]])
+return random.choice(responses) if responses else "Не понимаю запрос"
 
     def toggle_module(self, module_name, state):
         """Включает/выключает модули обработки"""
@@ -110,3 +105,14 @@ class Backend:
     def remove_synonym(self, base_word, synonym):
         """Удаляет синоним"""
         return self.synonym_mapper.remove_synonym(base_word, synonym)
+    def _enhance_response(self, response):
+        """Добавляет естественность в ответы"""
+        enhancers = {
+            "приветствие": ["Как ваши дела?", "Чем могу помочь?"],
+            "прощание": ["Хорошего дня!", "До новых встреч!"],
+            "вопрос": ["Могу уточнить детали.", "Это важный вопрос."]
+        }
+        
+        if random.random() > 0.7:  # 30% chance
+            return f"{response} {random.choice(enhancers.get('general', ['']))}"
+        return response

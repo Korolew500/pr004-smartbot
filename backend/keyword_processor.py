@@ -12,14 +12,15 @@ class KeywordProcessor:
         self.keyword_data = self.data_manager.load_data("keywords") or {}
 
     def extract_keywords(self, text):
-        """Извлекает ключевые слова из текста"""
+        """Извлекает ключевые слова из текста с учётом словоформ"""
         text_lower = text.lower()
-        return [k for k in self.keyword_data if k.lower() in text_lower]
+        tokens = set(re.findall(r'\w+', text_lower))
+        return [k for k in self.keyword_data if any(word in k.lower() for word in tokens)]
 
-    def process(self, text, max_responses=3):
-        """Возвращает подходящие ответы с метаданными"""
+    def process(self, text, max_responses=None):
+        """Возвращает все подходящие ответы с метаданными"""
         keywords = self.extract_keywords(text)
-        return [self.keyword_data[k] for k in keywords[:max_responses]]
+        return [self.keyword_data[k] for k in keywords]
     
     def add_keyword(self, keyword, response, ktype="общий"):
         """Добавляет новое ключевое слово"""

@@ -1,7 +1,7 @@
 """Telegram bot interface"""
 
 import logging
-from telegram import Update, Bot
+from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -9,6 +9,7 @@ from telegram.ext import (
     filters,
     CallbackContext
 )
+
 
 class TelegramInterface:
     def __init__(self, token: str, backend):
@@ -23,7 +24,7 @@ class TelegramInterface:
         self.application.add_handler(CommandHandler("help", self.help))
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         
-        self.logger.info("Telegram interface initialized")
+        self.logger.info("Telegram interface initialized and ready to process messages")
 
     async def start(self, update: Update, context: CallbackContext) -> None:
         """Send welcome message"""
@@ -46,12 +47,24 @@ class TelegramInterface:
         self.logger.info(f"Received message: {user_input}")
         
         try:
-            # Process message through backend with error handling
+            # Улучшенная обработка с логированием
             response = self.backend.process_message(user_input)
+            self.logger.info(f"Generated response: {response}")
+
+            # Гарантированный ответ
+            if not response:
+                response = "Извините, не удалось обработать ваш запрос"
+                self.logger.warning("Empty response generated")
+                self.logger.info(f"Generated response: {response}")
+
+                # Отправляем ответ даже если он пустой
+                if not response:
+                    response = "Извините, не удалось обработать ваш запрос"
+
         except Exception as e:
-            self.logger.error(f"Ошибка обработки сообщения: {str(e)}")
+            self.logger.exception(f"Ошибка обработки сообщения: {str(e)}")
             response = "Произошла внутренняя ошибка. Пожалуйста, попробуйте позже."
-        
+
         # Send response
         await update.message.reply_text(response)
 

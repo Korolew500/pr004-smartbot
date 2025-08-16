@@ -1,4 +1,6 @@
 """Основной модуль frontend"""
+import os
+
 
 class Frontend:
     def __init__(self, backend):
