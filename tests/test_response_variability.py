@@ -41,7 +41,5 @@ class TestResponseVariability(unittest.TestCase):
         with patch('random.random', return_value=0.8):  # >70% - должно добавиться улучшение
             response = self.backend.process_message("тест")
             self.assertIn("Основной ответ", response)
+            self.assertNotEqual(response, "Основной ответ")
             self.assertGreater(len(response), len("Основной ответ"))
-
-if __name__ == "__main__":
-    unittest.main()
