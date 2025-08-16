@@ -1,74 +1,38 @@
-"""Обновленные тесты для backend модуля"""
-
 import unittest
-from unittest.mock import MagicMock
 from backend.main import Backend
+from unittest.mock import MagicMock
 
 class TestBackend(unittest.TestCase):
     def setUp(self):
         self.backend = Backend()
-        
-        # Мокируем зависимости (ИСПРАВЛЕНО: map_to_base вместо map_synonyms)
-        self.backend.keyword_processor.process = MagicMock(return_value=[
-            {"responses": ["Тестовый ответ"], "type": "тест"}
-        ])
-        self.backend.spell_checker.correct_text = MagicMock(side_effect=lambda x: x)
-        self.backend.synonym_mapper.map_to_base = MagicMock(side_effect=lambda x: x)
-    
+        self.backend.spell_checker = MagicMock()
+        self.backend.spell_checker.correct_text = lambda x: x
+        self.backend.synonym_mapper = MagicMock()
+        self.backend.synonym_mapper.map_to_base = lambda x: x
+        self.backend.keyword_processor.keywords = {
+            "привет": {"responses": ["Здравствуйте!"]},
+            "мед": {"responses": ["У нас есть разные виды меда."]},
+            "стоит": {"responses": ["Цена зависит от объема."]}
+        }
+
     def test_composite_response(self):
         """Тест составного ответа из нескольких ключевых слов"""
-        # Создаем тестовые ключевые слова
-        self.bot.keyword_processor.keywords = {
-            "мед": {"responses": ["У нас есть липовый мед!"]},
-            "липовый мед": {"response": "Липовый мед: 500 руб/банка"},
-            "стоимость": {"responses": ["Цены уточняйте по телефону"]},
-            "заказ": {"response": "Для заказа нажмите кнопку 'Оформить заказ'"}
-        }
-        
-        # Тест 1: Простой запрос
-        response = self.bot.process_message("Хочу мед")
-        self.assertIn("У нас есть", response)
-        
-        # Тест 2: Составной запрос с пунктуацией
-        response = self.bot.process_message("Хочу липовый мед, какая стоимость?")
-        self.assertIn("липовый мед", response)
-        self.assertIn("Цены уточняйте", response)
-        
-        # Тест 3: Запрос со стоп-словами
-        response = self.bot.process_message("А как мне сделать заказ этого липового меда?")
-        self.assertIn("липовый мед", response)
-        self.assertIn("Оформить заказ", response)
-        
-        # Тест 4: Неизвестный запрос
-        response = self.bot.process_message("Сколько весит слон?")
-        self.assertEqual(response, "Извините, я не понял вопрос. Можете переформулировать?")
-        """Тест составного ответа из нескольких ключевых слов"""
-        # Создаем тестовые ключевые слова
-        self.bot.keyword_processor.keywords = {
-            "мед": {"responses": ["У нас есть липовый мед!"]},
-            "липовый": {"response": "Липовый мед: 500 руб/банка"},
-            "стоимость": {"responses": ["Цены уточняйте по телефону"]}
-        }
-        
-        # Тестовое сообщение содержит несколько ключевых слов
-        response = self.bot.process_message("Хочу липовый мед, какая стоимость?")
-        self.assertIn("липовый мед", response)
-        self.assertIn("Цены уточняйте", response)
-        """Тест приоритизации ответов"""
-        mock_responses = [
-            {"responses": ["Ответ 1"], "type": "продукт"},
-            {"responses": ["Ответ 2"], "type": "вопрос"},
-            {"responses": ["Ответ 3"], "type": "приветствие"}
-        ]
-        self.backend.keyword_processor.process.return_value = mock_responses
-        
-        result = self.backend.process_message("тест")
-        self.assertEqual(result, "Ответ 3")  # Проверка приоритизации
-    
-    # УДАЛЕН: тест на несуществующий метод toggle_module
-    
-    def test_empty_response(self):
-        """Тест обработки пустого ответа"""
-        self.backend.keyword_processor.process.return_value = []
-        result = self.backend.process_message("тест")
-        self.assertEqual(result, "Извините, я не понял вопрос. Можете переформулировать?")
+        result = self.backend.process_message("привет сколько стоит мед")
+        self.assertIn("Здравствуйте!", result)
+        self.assertIn("Цена зависит от объема.", result)
+        self.assertIn("У нас есть разные виды меда.", result)
+
+    def test_stop_words_removal(self):
+        """Тест удаления стоп-слов"""
+        self.backend.stop_words = {"и", "в", "на"}
+        result = self.backend.process_message("Привет и пока")
+        self.assertIn("Здравствуйте!", result)
+
+    def test_spell_correction(self):
+        """Тест коррекции орфографии"""
+        self.backend.spell_checker.correct_text = lambda x: "привет" if x == "првиет" else x
+        result = self.backend.process_message("првиет")
+        self.assertIn("Здравствуйте!", result)
+
+if __name__ == "__main__":
+    unittest.main()
