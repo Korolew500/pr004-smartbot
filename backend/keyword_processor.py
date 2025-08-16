@@ -1,37 +1,37 @@
+import json
+import os
+import logging
+
 class KeywordProcessor:
     def __init__(self):
         self.keywords = {}
-
-    def load_keywords(self, keywords_data):
-        """Загрузка ключевых слов из JSON"""
-        self.keywords = keywords_data
-
-    def extract_keywords(self, text: str) -> list:
-        """Извлечение ключевых слов с учётом приоритета длинных фраз"""
-        found = []
-        words = text.split()
+        self.logger = logging.getLogger('keyword_processor')
+        self._load_keywords()
         
-        # Поиск от самых длинных фраз к коротким
-        for length in range(4, 0, -1):
-            for i in range(len(words) - length + 1):
-                phrase = ' '.join(words[i:i+length])
-                if phrase in self.keywords:
-                    found.append(phrase)
-                    # Пропускаем слова, вошедшие в фразу
-                    words[i:i+length] = [''] * length
+    def _load_keywords(self):
+        try:
+            file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'keywords.json')
+            with open(file_path, 'r', encoding='utf-8') as f:
+                self.keywords = json.load(f)
+            self.logger.info(f"Загружено {len(self.keywords)} ключевых слов")
         
-        return found
-
-    def get_response(self, keyword):
-        """Получение ответа для ключевого слова"""
-        if keyword not in self.keywords:
-            return None
+            # Сортировка по длине фразы (длинные - в первую очередь)
+            self.sorted_keywords = sorted(
+                self.keywords.keys(), 
+                key=len, 
+                reverse=True
+            )
+        except Exception as e:
+            self.logger.error(f"Ошибка загрузки ключевых слов: {str(e)}")
             
-        data = self.keywords[keyword]
+    def extract_keywords(self, message):
+        found_keywords = []
         
-        if 'responses' in data:
-            return random.choice(data['responses'])
-        elif 'response' in data:
-            return data['response']
-        
-        return None
+        # Поиск сначала длинных фраз, потом коротких
+        for keyword in self.sorted_keywords:
+            if keyword in message:
+                found_keywords.append(keyword)
+                # Удаляем найденную фразу из сообщения
+                message = message.replace(keyword, "", 1)
+                
+        return found_keywords
