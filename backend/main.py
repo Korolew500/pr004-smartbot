@@ -12,6 +12,31 @@ class Backend:
         self.logger = logging.getLogger('backend')
 
     def process_message(self, message):
+        # Исправление орфографии
+        corrected = self.spell_checker.correct_text(message)
+        
+        # Нормализация текста (приведение к базовой форме)
+        normalized = self.normalize_text(corrected)
+        
+        # Извлечение ВСЕХ ключевых слов
+        keywords = self.keyword_processor.extract_keywords(normalized)
+        
+        # Сбор ВСЕХ ответов
+        responses = []
+        for keyword in keywords:
+            if keyword in self.keyword_processor.keywords:
+                data = self.keyword_processor.keywords[keyword]
+                # Поддержка старого (response) и нового формата (responses)
+                if 'responses' in data:
+                    responses.extend(data['responses'])
+                elif 'response' in data:
+                    responses.append(data['response'])
+        
+        # Формирование составного ответа
+        if responses:
+            return " ".join(responses)
+        else:
+            return "Извините, я не понял вопрос. Можете переформулировать?"
         try:
             # Логирование исходного сообщения
             self.logger.info(f"Обработка сообщения: {message}")

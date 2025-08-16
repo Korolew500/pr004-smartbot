@@ -15,7 +15,19 @@ class TestBackend(unittest.TestCase):
         self.backend.spell_checker.correct_text = MagicMock(side_effect=lambda x: x)
         self.backend.synonym_mapper.map_to_base = MagicMock(side_effect=lambda x: x)
     
-    def test_response_priority(self):
+    def test_composite_response(self):
+        """Тест составного ответа из нескольких ключевых слов"""
+        # Создаем тестовые ключевые слова
+        self.bot.keyword_processor.keywords = {
+            "мед": {"responses": ["У нас есть липовый мед!"]},
+            "липовый": {"response": "Липовый мед: 500 руб/банка"},
+            "стоимость": {"responses": ["Цены уточняйте по телефону"]}
+        }
+        
+        # Тестовое сообщение содержит несколько ключевых слов
+        response = self.bot.process_message("Хочу липовый мед, какая стоимость?")
+        self.assertIn("липовый мед", response)
+        self.assertIn("Цены уточняйте", response)
         """Тест приоритизации ответов"""
         mock_responses = [
             {"responses": ["Ответ 1"], "type": "продукт"},
