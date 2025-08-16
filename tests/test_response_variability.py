@@ -2,7 +2,7 @@
 
 import unittest
 from unittest.mock import MagicMock
-from backend.main import BackendProcessor
+from backend.processor import BackendProcessor
 
 class TestResponseVariability(unittest.TestCase):
     def setUp(self):
