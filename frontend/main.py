@@ -19,7 +19,7 @@ class Frontend:
             self.active_interface = ConsoleInterface()
             self._run_console_interface()
         elif interface_name == 'telegram':
-            from .telegram import TelegramInterface
+            from .tele import TelegramInterface
             token = os.getenv('TELEGRAM_TOKEN')
             if not token:
                 raise ValueError("TELEGRAM_TOKEN not set in environment")

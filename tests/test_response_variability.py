@@ -38,7 +38,7 @@ class TestResponseVariability(unittest.TestCase):
         ]
         self.backend.keyword_processor.process.return_value = mock_responses
         
-        with patch('random.random', return_value=0.2):  # 20% < 30% - должно добавиться улучшение
+        with patch('random.random', return_value=0.8):  # >70% - должно добавиться улучшение
             response = self.backend.process_message("тест")
             self.assertIn("Основной ответ", response)
             self.assertGreater(len(response), len("Основной ответ"))

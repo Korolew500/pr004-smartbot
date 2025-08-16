@@ -3,6 +3,6 @@
 # Импорт основных компонентов
 from .main import Frontend
 from .console import ConsoleInterface
-from .telegram import TelegramInterface
+from .tele import TelegramInterface
 
 __all__ = ['Frontend', 'ConsoleInterface', 'TelegramInterface']

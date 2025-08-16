@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
-from frontend.telegram import TelegramInterface
+from frontend.tele import TelegramInterface
 
 class TestTelegramInterface(unittest.IsolatedAsyncioTestCase):
     async def test_message_handling(self):
